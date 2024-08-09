@@ -6,13 +6,6 @@ import json
 import msgpack
 import click
 
-logging.basicConfig(
-    level="INFO",
-    format="[%(asctime)s]: %(name)s - %(levelname)s:%(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[logging.StreamHandler()],
-)
-
 ENCRYPTED_PATH = "encrypted_path"
 ENCRYPTION_METHOD = "encryption_method"    
 
@@ -39,18 +32,14 @@ class DecryptionHelper:
         encryption_method = kwargs["encryption_method"]
         hexset = encryption_method.split("encoded it with custom hex character set ")[1]
         standard_hex_set = "0123456789abcdef"
-
-        # Create a mapping dictionary
         custom_to_standard = {custom: standard for custom, standard in zip(hexset, standard_hex_set)}
-        
-        # Replace characters in the encrypted path using the mapping
         return ''.join(custom_to_standard.get(char, char) for char in data)
 
 
     def scrambled_b64_msgpack(self, data: str, **kwargs):
         encryption_method = kwargs["encryption_method"]
         scrambled_msgpack = encryption_method.split(": ")[1]
-        # TODO: Add msgpack b64 decoding and 
+        # TODO: Add msgpack b64 decoding and add unscrambling logic
         return "abcdefghijklmnopqrstuvywxyz"
 
 
@@ -82,22 +71,13 @@ class Solver:
         elif "scrambled! original positions as base64 encoded messagepack: " in encryption_method:
             return self.encryption_dict["scrambled_b64_msgpack"](encrypted_path, encryption_method=encryption_method)
         else:
-            raise TypeError(f"Unknown {encryption_method=}!")
+            raise TypeError(f"Unsupported {encryption_method=}!")
             
     
     def _print_response(self, response: dict):
         print ("###")
         print (json.dumps(response, indent=4))
         print ("###")
-
-    def _http_get(self, url: str) -> dict:
-        try:
-            resp = requests.get(url=url)
-            if resp.status_code != 200:
-                raise Exception(f"Failed to connect to {self.url=}")
-            return resp.json()
-        except Exception as e:
-            raise
 
     def _get_path_and_method(self, url: str, split_task=True) -> dict:
         try:
